@@ -6,6 +6,7 @@ import os
 
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
+import numpy as np
 
 IMAGE_SIZE = 64
 
@@ -19,8 +20,8 @@ def read_cifar10(filename_queue):
         pass
 
     result = CIFAR10Record()
-
-    label_bytes = 300 * 4
+    label_dim = 300
+    label_bytes = label_dim * 4
     result.height = 64
     result.width = 64
     result.depth = 3
@@ -28,22 +29,44 @@ def read_cifar10(filename_queue):
 
     record_bytes = label_bytes + image_bytes
 
-    reader = tf.FixedLengthRecordReader(record_bytes=record_bytes)
-    result.key, value = reader.read(filename_queue)
+    # reader = tf.FixedLengthRecordReader(record_bytes=record_bytes)
+    # result.key, value = reader.read(filename_queue)
+    #
+    #
+    # record_bytes = tf.decode_raw(value, tf.uint8)
+    # #record_bytes = value
+    #
+    # # label = tf.cast(
+    # #     tf.slice(record_bytes, [0], [label_bytes]), tf.float32)
+    # #
+    # # result.label = tf.reshape(label, [label_dim])
+    # #num = tf.constant([48])
+    #
+    # #result.label = tf.sub(result.label, num)
+    #
+    # c = (value.tolist())[:label_bytes]
+    # label = np.fromstring(value[:label_bytes], dtype=np.float32).reshape(300)
+    # result.label = tf.constant(label)
 
-    #record_bytes = tf.decode_raw(value, tf.uint8)
+    reader = tf.TFRecordReader()
+    _, serializded_example = reader.read(filename_queue)
+    features = tf.parse_single_example(serializded_example,
+                                       features={
+                                           'label': tf.FixedLenFeature([], tf.string),
+                                           'image_raw': tf.FixedLenFeature([], tf.string)
+                                       })
 
-    result.label = tf.cast(
-        tf.slice(record_bytes, [0], [label_bytes]), tf.float32)
-    #num = tf.constant([48])
+    image = tf.decode_raw(features['image_raw'], tf.uint8)
 
-    #result.label = tf.sub(result.label, num)
-
-    depth_major = tf.reshape(tf.slice(record_bytes, [label_bytes], [image_bytes]),
+    depth_major = tf.reshape(image,
                              [result.height, result.width, result.depth])
 
     result.uint8image = depth_major  # tf.transpose(depth_major, [1, 2, 0])
 
+    label_raw = tf.decode_raw(features['label'], tf.float32)
+
+    result.label = tf.reshape(label_raw,
+                             [label_dim])
     return result
 
 
@@ -72,8 +95,8 @@ def _generate_image_and_label_batch(image, label, min_queue_examples,
 
 
 def distorted_inputs(data_dir, batch_size):
-    filenames = [os.path.join(data_dir, 'image_%d.bin' % i)
-                 for i in xrange(0, 3)]
+    filenames = [os.path.join(data_dir, 'image_%d.tfrecords' % i)
+                 for i in xrange(0, 1)]
     for f in filenames:
         if not tf.gfile.Exists(f):
             raise ValueError('Failed to find file: ' + f)

@@ -11,7 +11,7 @@ import tarfile
 
 from six.moves import urllib
 import tensorflow as tf
-from slim import variables
+
 
 import image_input
 
@@ -84,7 +84,7 @@ def inference(images):
         conv = tf.nn.conv2d(images, kernel, [1, 1, 1, 1], padding='SAME')
         biases = _variable_on_cpu('biases', [96], tf.constant_initializer(0.0))
         bias = tf.nn.bias_add(conv, biases)
-        conv1 = tf.nn.relu(bias, name=scope.name)
+        conv1 = tf.nn.sigmoid(bias, name=scope.name)
         _activation_summary(conv1)
 
     # pool1
@@ -101,7 +101,7 @@ def inference(images):
         conv = tf.nn.conv2d(norm1, kernel, [1, 1, 1, 1], padding='SAME')
         biases = _variable_on_cpu('biases', [96], tf.constant_initializer(0.1))
         bias = tf.nn.bias_add(conv, biases)
-        conv2 = tf.nn.relu(bias, name=scope.name)
+        conv2 = tf.nn.sigmoid(bias, name=scope.name)
         _activation_summary(conv2)
 
     # norm2
@@ -122,7 +122,7 @@ def inference(images):
         weights = _variable_with_weight_decay('weights', shape=[dim, 768],
                                               stddev=0.04, wd=0.004)
         biases = _variable_on_cpu('biases', [768], tf.constant_initializer(0.1))
-        local3 = tf.nn.relu(tf.matmul(reshape, weights) + biases, name=scope.name)
+        local3 = tf.nn.sigmoid(tf.matmul(reshape, weights) + biases, name=scope.name)
         _activation_summary(local3)
 
 
@@ -173,7 +173,7 @@ def loss(logits, labels):
     tf.add_to_collection('losses', cross_entropy_mean)
     """
 
-    loss_euclidean_distance = tf.reduce_sum(tf.square(tf.sub(logits - labels)), 1)
+    loss_euclidean_distance = tf.reduce_sum(tf.square(tf.sub(logits, labels)), 1)
     loss_mean = tf.reduce_mean(loss_euclidean_distance, name='loss_eunlidean_distance')
     tf.add_to_collection('losses', loss_mean)
     # The total loss is defined as the cross entropy loss plus all of the weight
