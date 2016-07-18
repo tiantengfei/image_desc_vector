@@ -164,7 +164,6 @@ def inference(images):
 
 def loss(logits, labels):
     # Calculate the average cross entropy loss across the batch.
-
     """
     labels = tf.cast(labels, tf.int64)
     cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
@@ -173,7 +172,7 @@ def loss(logits, labels):
     tf.add_to_collection('losses', cross_entropy_mean)
     """
 
-    loss_euclidean_distance = tf.reduce_sum(tf.square(tf.sub(logits, labels)), 1)
+    loss_euclidean_distance = tf.sqrt(tf.reduce_sum(tf.square(tf.sub(logits, labels)), 1))
     loss_mean = tf.reduce_mean(loss_euclidean_distance, name='loss_eunlidean_distance')
     tf.add_to_collection('losses', loss_mean)
     # The total loss is defined as the cross entropy loss plus all of the weight

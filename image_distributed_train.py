@@ -254,16 +254,17 @@ def train():
             while not sv.should_stop():
                 try:
                     start_time = time.time()
-                    loss_value, step = sess.run([train_op, global_step])
+                    loss_value, step, logits_data, labels_data = sess.run([train_op, global_step, logits, labels])
                     assert not np.isnan(loss_value), 'Model diverged with loss = NaN'
                     if step > FLAGS.max_steps:
                         break
                     duration = time.time() - start_time
 
-                    if step % 30 == 0:
+                    if step % 2 == 0:
                         examples_per_sec = FLAGS.batch_size / float(duration)
                         format_str = ('Worker %d: %s: step %d, loss = %.2f'
                                       '(%.1f examples/sec; %.3f  sec/batch)')
+                        print('logits is {}, \n lables is {} '.format(logits_data[1], labels_data[1]))
                         tf.logging.info(format_str %
                                         (FLAGS.task_id, datetime.now(), step, loss_value,
                                          examples_per_sec, duration))
