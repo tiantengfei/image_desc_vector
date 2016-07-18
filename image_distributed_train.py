@@ -1,6 +1,4 @@
-"""A library to train Inception using multiple replicas with synchronous update.
-Please see accompanying README.md for details and instructions.
-"""
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -9,11 +7,11 @@ from datetime import datetime
 import os.path
 import time
 import image
+import sys
 
 import numpy as np
 import tensorflow as tf
 import image_input
-import slim
 
 IMAGE_SIZE = image_input.IMAGE_SIZE
 NUM_CLASSES = image_input.NUM_CLASSES
@@ -82,6 +80,8 @@ RMSPROP_EPSILON = 1.0  # Epsilon term for RMSProp.
 
 
 def train():
+    """ build the train graph using synchronous update.
+    """
     assert FLAGS.job_name in ['ps', 'worker'], 'job_name must be ps or worker'
 
     ps_hosts = FLAGS.ps_hosts.split(',')
@@ -125,13 +125,7 @@ def train():
         # Ops are assigned to worker by default.
         with tf.device(tf.train.replica_device_setter(worker_device='/job:worker/task:%d' % FLAGS.task_id,
                                                       cluster=cluster_spec)):
-            # Variables and its related init/assign ops are assigned to ps.
-            # with slim.scopes.arg_scope(
-            # [slim.variables.variable, slim.variables.global_step],
-            # device=slim.variables.VariableDeviceChooser(num_parameter_servers)):
-            # Create a variable to count the number of train() calls. This equals the
-            # number of updates applied to the variables.
-            # global_step = slim.variables.global_step()
+
             global_step = tf.Variable(0, name='global_step', trainable=False)
             num_batches_per_epoch = NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN / FLAGS.batch_size
             decay_steps = int(num_batches_per_epoch * NUM_EPOCHS_PER_DECAY)
@@ -148,8 +142,6 @@ def train():
             images, labels = image.distorted_inputs()
             logits = image.inference(images)
             total_loss = image.loss(logits, labels)
-
-            # train_op = image.train(loss, global_step)
 
             if is_chief:
                 loss_averages = tf.train.ExponentialMovingAverage(0.9, name='avg')
@@ -179,12 +171,6 @@ def train():
                 variable_averages=variable_averages,
                 variables_to_average=variables_averages_op)
 
-            # batchnorm_updates = tf.get_collection(slim.ops.UPDATE_OPS_COLLECTION)
-            # assert batchnorm_updates, 'Batchnorm updates are missing'
-            # batchnorm_updates_op = tf.group(*batchnorm_updates)
-            ## Add dependency to compute batchnorm_updates.
-            # with tf.control_dependencies([batchnorm_updates_op]):
-            #   total_loss = tf.identity(total_loss)
 
             # Compute gradients with respect to the loss.
             grads = opt.compute_gradients(total_loss)
@@ -301,10 +287,11 @@ def train():
             print("end")
 
 
-def main(_):  # pylint: disable=unused-argument
+def main(_):
 
     if tf.gfile.Exists(FLAGS.train_dir):
-        tf.gfile.DeleteRecursively(FLAGS.train_dir)
+        print('the train_dir {} has existence.' % FLAGS.train_dir)
+        sys.exit(-1)
     tf.gfile.MakeDirs(FLAGS.train_dir)
     train()
 

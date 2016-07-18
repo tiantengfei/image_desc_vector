@@ -6,7 +6,6 @@ import os
 
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
-import numpy as np
 
 IMAGE_SIZE = 64
 
@@ -16,37 +15,25 @@ NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = 1770
 
 
 def read_cifar10(filename_queue):
+    """ read a example from the filename queue. The TFRecordReader is used to
+     read examples from tfrecords' files. The decoder of decode_raw is used to
+     decode the tf.string of the example.
+
+     Args:
+         filename_queue: filename's queue where the file reader read from will be placed.
+
+     Returns:
+         A example used to train.
+    """
+
     class CIFAR10Record(object):
         pass
 
     result = CIFAR10Record()
     label_dim = 300
-    label_bytes = label_dim * 4
     result.height = 64
     result.width = 64
     result.depth = 3
-    image_bytes = result.height * result.width * result.depth
-
-    record_bytes = label_bytes + image_bytes
-
-    # reader = tf.FixedLengthRecordReader(record_bytes=record_bytes)
-    # result.key, value = reader.read(filename_queue)
-    #
-    #
-    # record_bytes = tf.decode_raw(value, tf.uint8)
-    # #record_bytes = value
-    #
-    # # label = tf.cast(
-    # #     tf.slice(record_bytes, [0], [label_bytes]), tf.float32)
-    # #
-    # # result.label = tf.reshape(label, [label_dim])
-    # #num = tf.constant([48])
-    #
-    # #result.label = tf.sub(result.label, num)
-    #
-    # c = (value.tolist())[:label_bytes]
-    # label = np.fromstring(value[:label_bytes], dtype=np.float32).reshape(300)
-    # result.label = tf.constant(label)
 
     reader = tf.TFRecordReader()
     _, serializded_example = reader.read(filename_queue)
@@ -65,13 +52,24 @@ def read_cifar10(filename_queue):
 
     label_raw = tf.decode_raw(features['label'], tf.float32)
 
-    result.label = tf.reshape(label_raw,
-                             [label_dim])
+    result.label = tf.reshape(label_raw, [label_dim])
     return result
 
 
 def _generate_image_and_label_batch(image, label, min_queue_examples,
                                     batch_size, shuffle):
+    """ generate a batch of images and labels.
+
+    Args:
+        image: the trained image.
+        label: label correspond to the image.
+        min_queue_examples: the least examples int the example's queue.
+        batch_size: the size of a batch.
+        shuffle: whether or not to shuffle the examples.
+
+    Returns:
+        A batch of examples including images and the corresponding label.
+    """
     num_preprocess_threads = 16
     if shuffle:
         images, label_batch = tf.train.shuffle_batch(
@@ -89,12 +87,18 @@ def _generate_image_and_label_batch(image, label, min_queue_examples,
 
     # Display the training images in the visualizer.
     tf.image_summary('images', images)
-
-    #return images, tf.reshape(label_batch, [batch_size, 300])
     return images, label_batch
 
 
 def distorted_inputs(data_dir, batch_size):
+    """ distort the images and get a batch of trained images.
+    Args:
+        data_dir: directory that place the images' data.
+        batch_size: the number of images that a step will be trained.
+
+    Returns:
+        A batch of examples including images and the corresponding label.
+    """
     filenames = [os.path.join(data_dir, 'image_%d.tfrecords' % i)
                  for i in xrange(0, 1)]
     for f in filenames:
@@ -130,5 +134,3 @@ def distorted_inputs(data_dir, batch_size):
     return _generate_image_and_label_batch(float_image, read_input.label,
                                            min_queue_examples, batch_size,
                                            shuffle=True)
-
-
