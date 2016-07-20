@@ -10,7 +10,7 @@
 ###On the woker0 server, type:
     $:python image_distributed_train.py \
     --ps_hosts=www.ps0.com:2222 \
-    --worker_hosts=www.worker0.com:2222,www.woker1.com \
+    --worker_hosts=www.worker0.com:2222,www.woker1.com:2222 \
     --job_name=woker --task_id=0
 
 
