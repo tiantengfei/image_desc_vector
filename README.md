@@ -14,7 +14,7 @@
     --job_name=woker --task_id=0
 
 
-###On the worker server, type:
+###On the worker1 server, type:
     $:python image_distributed_train.py 
     --ps_hosts=www.ps0.com:2222 \
     --worker_hosts=www.worker0.com:2222,www.woker1.com \
