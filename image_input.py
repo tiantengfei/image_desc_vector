@@ -15,7 +15,7 @@ NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = 1770
 
 
 def read_cifar10(filename_queue):
-    """ read a example from the filename queue. The TFRecordReader is used to
+    """ Read a example from the filename queue. The TFRecordReader is used to
      read examples from tfrecords' files. The decoder of decode_raw is used to
      decode the tf.string of the example.
 
@@ -99,8 +99,9 @@ def distorted_inputs(data_dir, batch_size):
     Returns:
         A batch of examples including images and the corresponding label.
     """
-    filenames = [os.path.join(data_dir, 'image_%d.tfrecords' % i)
-                 for i in xrange(0, 1)]
+    filenames = [os.path.join(data_dir, f) for f in os.listdir(data_dir)]
+    # filenames = [os.path.join(data_dir, 'image_%d.tfrecords' % i)
+    #              for i in xrange(0, 1)]
     for f in filenames:
         if not tf.gfile.Exists(f):
             raise ValueError('Failed to find file: ' + f)

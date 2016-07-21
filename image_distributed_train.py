@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -153,8 +152,8 @@ def train():
                     # as the original loss name.
                     tf.scalar_summary(l.op.name + ' (raw)', l)
                     tf.scalar_summary(l.op.name, loss_averages.average(l))
-                with tf.control_dependencies([loss_averages_op]):
-                    total_loss = tf.identity(total_loss)
+            with tf.control_dependencies([loss_averages_op]):
+                total_loss = tf.identity(total_loss)
 
             variable_averages = tf.train.ExponentialMovingAverage(
                 MOVING_AVERAGE_DECAY, global_step)
@@ -170,7 +169,6 @@ def train():
                 total_num_replicas=num_workers,
                 variable_averages=variable_averages,
                 variables_to_average=variables_averages_op)
-
 
             # Compute gradients with respect to the loss.
             grads = opt.compute_gradients(total_loss)
@@ -227,7 +225,7 @@ def train():
             sv.start_queue_runners(sess, queue_runners)
             tf.logging.info('Started %d queues for processing input data.',
                             len(queue_runners))
-            print('Started %d queues for processing input data.'%
+            print('Started %d queues for processing input data.' %
                   len(queue_runners))
             if is_chief:
                 sv.start_queue_runners(sess, chief_queue_runners)
@@ -255,8 +253,8 @@ def train():
                                         (FLAGS.task_id, datetime.now(), step, loss_value,
                                          examples_per_sec, duration))
                         print(format_str %
-                                        (FLAGS.task_id, datetime.now(), step, loss_value,
-                                         examples_per_sec, duration))
+                              (FLAGS.task_id, datetime.now(), step, loss_value,
+                               examples_per_sec, duration))
 
                     # Determine if the summary_op should be run on the chief worker.
                     if is_chief and next_summary_time < time.time():
@@ -288,7 +286,6 @@ def train():
 
 
 def main(_):
-
     if tf.gfile.Exists(FLAGS.train_dir):
         print('the train_dir {} has existence.' % FLAGS.train_dir)
         sys.exit(-1)
